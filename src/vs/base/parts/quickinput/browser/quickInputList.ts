@@ -715,7 +715,7 @@ export class QuickInputList {
 			});
 		}
 
-		const shownElements = this.elements.filter(element => !element.hidden);
+		let shownElements = this.elements.filter(element => !element.hidden);
 
 		// Sort by value
 		if (this.sortByLabel && query) {
@@ -723,6 +723,16 @@ export class QuickInputList {
 			shownElements.sort((a, b) => {
 				return compareEntries(a, b, normalizedSearchValue);
 			});
+
+			// Promote perfect matches on file extensions
+			if (!normalizedSearchValue.includes(' ') && this.matchOnMeta) {
+				const asFileExtension = normalizedSearchValue.startsWith('.') ? normalizedSearchValue : `.${normalizedSearchValue}`;
+
+				const perfectMatches = shownElements.filter(el => el.saneMeta?.split(' ').includes(asFileExtension));
+				const others = shownElements.filter(el => !perfectMatches.includes(el));
+
+				shownElements = [...perfectMatches, ...others];
+			}
 		}
 
 		this.elementsToIndexes = shownElements.reduce((map, element, index) => {
